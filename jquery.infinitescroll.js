@@ -4,6 +4,11 @@
 // version 1.5.110124
 
 // home and docs: http://www.infinite-scroll.com
+
+// support for MODX with Ditto
+// Usage
+// [!Ditto? &parents=`2` &depth=`1` &tpl=`@FILE:assets/templates/site/chunks/article.html` &paginate=`1` &display=`5`!]
+// [+next+]
 */
  
 ;(function($){
@@ -45,7 +50,14 @@
           
           debug('Trying backup next selector parse technique. Treacherous waters here, matey.');
           path = path.match(/^(.*?)2(.*?$)/).slice(1);
-      } else {
+      
+        // if var is start - for MODX + Ditto(uses start in the url)
+        // the default path is returned   
+        } else if (path.match(/^(.*?)start(.*?$)/)){
+        
+          return path;
+      
+        } else {
           
         // page= is used in drupal too but second page is page=1 not page=2:
         // thx Jerod Fritz, vladikoff
@@ -152,8 +164,20 @@
 	        box = $(opts.contentSelector).is('table') ? $('<tbody/>') : $('<div/>');
 	        frag = document.createDocumentFragment();
 	        
-	        
-	        if ($.isFunction(opts.pathParse)){
+	        //detect MODX with Ditto
+	        if (path.match(/^(.*?)start(.*?$)/)) {		    	
+		    	
+		    	if((opts.currPage - 1) > 1){
+		    		
+		    		var splitPath = path.split("start="); //split by start
+		    		//put start number * current page - 1
+		    		desturl = splitPath[0] + 'start=' + (parseInt(splitPath[1])*(opts.currPage - 1)); 
+		    	}else{
+		    		//first ditto call
+		    		desturl = path;
+		    	}
+		    	
+		    }else if ($.isFunction(opts.pathParse)){
 		        // if we got a custom path parsing function, pass in our path guess and page iteration
 		        desturl = opts.pathParse(path.join('2'), opts.currPage);
 		    } else {
